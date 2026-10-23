@@ -1,0 +1,78 @@
+{
+  "name": "阿米娅",
+  "kind": "pet",
+  "pixelsPerPoint": 2,
+  "walkSpeed": 29.5,
+  "animations": {
+    "relax": {
+      "name": "Relax",
+      "count": 30,
+      "fps": 30,
+      "size": [
+        193,
+        281
+      ],
+      "anchor": [
+        127.7,
+        276.9
+      ],
+      "lift": 0
+    },
+    "move": {
+      "name": "Move",
+      "count": 34,
+      "fps": 30,
+      "size": [
+        167,
+        283
+      ],
+      "anchor": [
+        96.5,
+        273.5
+      ],
+      "lift": 0
+    },
+    "interact": {
+      "name": "Interact",
+      "count": 30,
+      "fps": 30,
+      "size": [
+        204,
+        278
+      ],
+      "anchor": [
+        141.4,
+        274.5
+      ],
+      "lift": 0
+    },
+    "sit": {
+      "name": "Sit",
+      "count": 120,
+      "fps": 15,
+      "size": [
+        162,
+        274
+      ],
+      "anchor": [
+        78.7,
+        212.2
+      ],
+      "lift": 59.6
+    },
+    "sleep": {
+      "name": "Sleep",
+      "count": 45,
+      "fps": 15,
+      "size": [
+        292,
+        145
+      ],
+      "anchor": [
+        169.5,
+        116.6
+      ],
+      "lift": 25.6
+    }
+  }
+}

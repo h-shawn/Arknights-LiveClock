@@ -1,0 +1,12 @@
+# Xcode
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+.DS_Store
+
+# 工具依赖（npm install 生成）
+tools/spine/node_modules/
+
+# 原始视频（P3R 官网视频等），不入库
+videos/

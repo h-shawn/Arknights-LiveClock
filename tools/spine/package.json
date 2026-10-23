@@ -1,0 +1,8 @@
+{
+  "name": "liveface-spine-tools",
+  "private": true,
+  "description": "把明日方舟基建小人（Spine 3.8）渲染成 LiveFace 桌宠精灵帧",
+  "dependencies": {
+    "pngjs": "^7.0.0"
+  }
+}

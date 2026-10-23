@@ -1,0 +1,78 @@
+{
+  "name": "克莱门莎",
+  "kind": "pet",
+  "pixelsPerPoint": 2,
+  "walkSpeed": 39.4,
+  "animations": {
+    "relax": {
+      "name": "Relax",
+      "count": 72,
+      "fps": 30,
+      "size": [
+        200,
+        283
+      ],
+      "anchor": [
+        99.4,
+        266.7
+      ],
+      "lift": 0
+    },
+    "move": {
+      "name": "Move",
+      "count": 72,
+      "fps": 30,
+      "size": [
+        202,
+        284
+      ],
+      "anchor": [
+        98.8,
+        266.3
+      ],
+      "lift": 0
+    },
+    "interact": {
+      "name": "Interact",
+      "count": 66,
+      "fps": 30,
+      "size": [
+        194,
+        285
+      ],
+      "anchor": [
+        93.7,
+        268.6
+      ],
+      "lift": 0
+    },
+    "sit": {
+      "name": "Sit",
+      "count": 60,
+      "fps": 15,
+      "size": [
+        203,
+        268
+      ],
+      "anchor": [
+        111.1,
+        186
+      ],
+      "lift": 79.2
+    },
+    "sleep": {
+      "name": "Sleep",
+      "count": 36,
+      "fps": 15,
+      "size": [
+        325,
+        150
+      ],
+      "anchor": [
+        160.8,
+        126.9
+      ],
+      "lift": 20.9
+    }
+  }
+}
