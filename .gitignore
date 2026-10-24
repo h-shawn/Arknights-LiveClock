@@ -7,6 +7,9 @@ xcuserdata/
 
 # 工具依赖（npm install 生成）
 tools/spine/node_modules/
+tools/spine/.venv/
+tools/spine/models/
+tools/spine/backdrop-sources/x4/
 
 # 原始视频（P3R 官网视频等），不入库
 videos/

@@ -1,16 +1,15 @@
 import ImageIO
 import SwiftUI
 
-/// 打包了桌宠素材就放桌宠，有帧序列就播帧序列，都没有就播内置的水波动画。
+/// 打包了桌宠素材就放桌宠的背景（桌宠本身由 FaceView 另画一层），有帧序列就播帧序列，都没有就播内置的水波动画。
 struct Background: View {
     let paused: Bool
-    let pet: PetBrain
-    let petIndex: Int
+    let sprites: PetSprites?
     let backgroundIndex: Int
 
     var body: some View {
-        if let sprites = PetRoster.sprites(at: petIndex) {
-            PetView(sprites: sprites, brain: pet, background: Backdrops.image(at: backgroundIndex), paused: paused)
+        if let sprites {
+            PetBackdrop(sprites: sprites, image: Backdrops.image(at: backgroundIndex))
         } else if let frames = FrameSequence.bundled {
             FramePlayer(frames: frames, paused: paused)
         } else {

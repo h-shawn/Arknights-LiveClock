@@ -128,7 +128,7 @@ function vert(m, k) {
 }
 
 // ---------- 每个动作一张画布，记下骨骼原点在图里的像素位置（锚点） ----------
-// 缩放统一按站立动作的最大身高算，坐、睡和站着时一样大
+// 缩放统一按待机和走路的最大身高算，坐、睡、互动和站着时一样大（互动常有跳起、挥武器，不算进去，不然人会被缩小）
 let poseHeight = 0;
 for (const [role, clip] of Object.entries(clips)) {
   clip.minX = Infinity; clip.minY = Infinity; clip.maxX = -Infinity; clip.maxY = -Infinity;
@@ -139,7 +139,7 @@ for (const [role, clip] of Object.entries(clips)) {
       clip.minX = Math.min(clip.minX, x); clip.maxX = Math.max(clip.maxX, x);
       clip.minY = Math.min(clip.minY, y); clip.maxY = Math.max(clip.maxY, y);
       lo = Math.min(lo, y); hi = Math.max(hi, y); } });
-    if (role === "relax" || role === "move" || role === "interact") poseHeight = Math.max(poseHeight, hi - lo);
+    if (role === "relax" || role === "move") poseHeight = Math.max(poseHeight, hi - lo);
   }
 }
 const scale = Number(opts.height || 278) / poseHeight;   // 像素/骨骼单位

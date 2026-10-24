@@ -1,13 +1,22 @@
 # LiveFace 动态表盘
 
-把视频循环播放成“表盘”的 Apple Watch App：全屏动画，上面叠一层自己画的时间。也可以放会走动、能戳的桌宠：轻点戳她，长按换背景，转表冠换角色。
+把视频循环播放成“表盘”的 Apple Watch App：全屏动画，上面叠一层自己画的时间。也可以放会走动、能互动的桌宠：轻点戳她，按住拎起来甩出去，在空白处拖动逗她追手指，歪手腕她会往低处滑，甩手腕把她颠起来，长按空白处换背景，转表冠换角色。
 
 watchOS 不开放第三方表盘，所以它其实是个 App。配合手表的「返回时钟」设置，抬腕时看到的一直是它。
 
 ## 功能
 
 - 三种背景，按 `LiveFace/Frames/` 里放了什么自动选择：
-  - 桌宠：`pets/` 里每位角色一个文件夹（`pet.json` 加精灵帧），背景图放在 `backgrounds/`（文件名排序，`1-` 后面是名字，最后还有一个纯深色）。角色会自己待机、走动、偶尔坐到凳子上，夜里（默认 23 点到 7 点）躺下睡觉；**轻点屏幕**她会做互动动作，**长按**换背景，**转表冠**换角色，选择都会被记住
+  - 桌宠：`pets/` 里每位角色一个文件夹（`pet.json` 加精灵帧），背景图放在 `backgrounds/`（按文件名前面的序号排，`1-` 后面是名字；一张都没有时用纯深色）。角色会自己待机、走动、偶尔坐到凳子上，夜里（默认 23 点到 7 点）走到垫子上躺下睡觉。可以这样跟她玩：
+    - **轻点**：做一次互动动作
+    - **按住她，或从她身上直接拖**：拎起来（手表轻震一下），跟着手指像钟摆一样晃；松手就掉下去，甩得猛会弹一下、摔晕冒星星，丢到凳子上会坐下
+    - **在空白处拖动手指**：她会跑过来追，追上了开心一下
+    - **歪手腕**：歪得厉害（约 27° 以上）她会往低的一边滑，猛地一歪会撞到屏幕边晕一会儿；坐着的歪得更狠会从凳子上滑下来。拎着、在空中时也会偏向低的一边
+    - **甩一下手腕**：把她颠起来，甩得越猛飞得越高，撞到屏幕顶会晕；她还在空中时再甩，能接着颠
+    - **在空白处按住不动**：换背景
+    - **转表冠**：换角色。背景和角色的选择都会被记住
+
+    夜里被弄醒后，她会醒 20 秒左右再接着睡
   - 视频：有 `frame-*.jpg` 时，全屏循环播放
   - 都没有时，播内置的水波动画
 - 五种时间样式，在 `FaceConfig.clockStyle` 里选，默认「顶部」：
@@ -55,10 +64,11 @@ swift scripts/make_frames.swift ~/Downloads/你的视频.mp4 --start 3 --duratio
 2. 在左侧点工程 → TARGETS 选 **LiveFace** → **Signing & Capabilities**：
    - **Team** 选你的 Apple ID（Personal Team）。
    - **Bundle Identifier** 如果提示已被占用，改成独一无二的，比如 `com.你的名字.liveface`。
+   - TARGETS 里的 **LiveFaceWidget**（表盘上的复杂功能）也选同一个 Team；它的 Bundle Identifier 要是 App 的加上 `.widget`，比如 `com.你的名字.liveface.widget`。
 3. iPhone 和手表都打开开发者模式：设置 → 隐私与安全性 → 开发者模式。手表上的这个开关，要等 Xcode 发现过手表一次之后才会出现。
 4. 在 Xcode 顶部的运行目标里选你的手表，按 ⌘R。第一次要拷贝调试符号，可能要十几分钟，期间让手表保持亮屏、解锁。
 5. 如果提示“不受信任的开发者”：在 iPhone 上打开设置 → 通用 → VPN 与设备管理，信任你的证书，再运行一次。
-6. 装好后在 Xcode 里点停止，然后在手表上直接打开「动态表盘」。
+6. 装好后在 Xcode 里点停止，然后在手表上直接打开「LiveFace」。
 
 连不上手表？先关掉 Mac 上的代理或 VPN，让 Mac、iPhone、手表连同一个 Wi-Fi，并让手表的蓝牙保持开启。
 
@@ -66,9 +76,17 @@ swift scripts/make_frames.swift ~/Downloads/你的视频.mp4 --start 3 --duratio
 
 ## 3. 让它一直留在屏幕上
 
-在手表上打开：设置 → 通用 → 返回时钟 → 动态表盘 → 自定 → 1 小时后。也可以在 iPhone「Watch」App → 通用 → 返回时钟 里设置。
+在手表上打开：设置 → 通用 → 返回时钟 → LiveFace → 自定 → 1 小时后。也可以在 iPhone「Watch」App → 通用 → 返回时钟 里设置。
 
 这样放下手腕后一小时内再抬腕，看到的还是它。超过一小时没看会回到系统表盘，重新打开一次即可。
+
+## 4. 在系统表盘上放一个快捷入口
+
+App 里带了一个复杂功能：明日方舟的游戏图标，写着 Arknights LiveFace，点一下直接打开 LiveFace。
+
+在手表上长按系统表盘 → 编辑 → 往左滑到「复杂功能」→ 点一个位置 → 在列表里找到「LiveFace」，选「Arknights LiveFace」。圆形、角落、长条位置都能放，也能加到智能叠放里。也可以在 iPhone「Watch」App 里编辑表盘。
+
+彩色表盘（比如颜色选了「多色」）上显示原来的彩色图标；单色表盘上显示成黑白的。
 
 ## 自定义
 
@@ -77,6 +95,8 @@ swift scripts/make_frames.swift ~/Downloads/你的视频.mp4 --start 3 --duratio
 | 时间样式、12/24 小时制、常亮时背景亮度 | `LiveFace/FaceConfig.swift` |
 | 桌宠站的高度、走动范围、凳子位置、几点睡觉 | `LiveFace/FaceConfig.swift` |
 | 桌宠多久走一次、坐多久、待机多久 | `LiveFace/Pet.swift` 里的 `PetBrain` |
+| 歪多少会滑、甩多猛算甩一下 | `LiveFace/Pet.swift` 里的 `Physics`，`LiveFace/WristMotion.swift` 里的 `shakeThreshold` |
+| 表盘复杂功能的图标和文字 | `LiveFaceWidget/LiveFaceWidget.swift`；换了 App 图标后用 `scripts/make_complication_icons.py` 重新生成复杂功能的图标 |
 | 时间的字号、位置、颜色；加新样式 | `LiveFace/ClockStyles.swift` |
 | 没放视频时的默认动画 | `LiveFace/Background.swift` 里的 `WaveBackground` |
 
@@ -84,12 +104,15 @@ swift scripts/make_frames.swift ~/Downloads/你的视频.mp4 --start 3 --duratio
 
 ## 已知限制
 
-- 它是 App 不是表盘：没有复杂功能和智能叠放，太久不看会退回系统表盘。
+- 它是 App 不是表盘：太久不看会退回系统表盘，可以点系统表盘上的复杂功能再打开。
+- 模拟器没有运动传感器，歪手腕、甩手腕只能在真手表上试。
 - 右上角的系统时间是用 SwiftUI 没写进文档的 `_statusBarHidden` 藏掉的（公开文档里的 `persistentSystemOverlays`、`toolbar(.hidden)` 等写法在 watchOS 上都无效）。在 watchOS 27 模拟器上验证有效，但以后的系统更新可能让它失效；这种 App 也不适合上架。
 - 常亮显示时动画停住，这是 watchOS 对所有 App 的限制。
-- 比静态表盘耗电：抬腕亮屏期间一直在解码、绘制画面。
+- 比静态表盘耗电：抬腕亮屏期间一直在解码、绘制画面，还会读运动传感器。
 - 免费签名 7 天后过期。
 
 ## 致谢
 
 菜单样式的版式参数来自 [P3R-LiveClock](https://github.com/Hastur-02/P3R-LiveClock)（MIT）。
+
+App 图标是 App Store 上「明日方舟」的图标。图标、桌宠小人和宿舍背景的版权都归鹰角网络，只供自己使用，不要公开分享。
