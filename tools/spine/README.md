@@ -12,7 +12,7 @@ brew install pngquant   # 把精灵帧压成 256 色，体积只有三成
 
 ## 加一位干员
 
-1. 找编号：下载 [Ark-Models](https://github.com/isHarryh/Ark-Models) 的 `models_data.json`，按中文名查到编号（比如克莱门莎是 `4231_clemnt`）。皮肤的编号带 `#`，比如近卫阿米娅的「于万千宇宙之中」是 `1001_amiya2_sale#16`。这个文件里只写了皮肤属于哪个系列，皮肤名要到 [ArknightsGameData](https://github.com/Kengxxiao/ArknightsGameData) 的 `skin_table.json` 里查。
+1. 找编号：下载 [Ark-Models](https://github.com/isHarryh/Ark-Models) 的 `models_data.json`，按中文名查到编号（比如史尔特尔是 `350_surtr`）。皮肤的编号带 `#`，比如近卫阿米娅的「于万千宇宙之中」是 `1001_amiya2_sale#16`。这个文件里只写了皮肤属于哪个系列，皮肤名要到 [ArknightsGameData](https://github.com/Kengxxiao/ArknightsGameData) 的 `skin_table.json` 里查。
 2. 下载模型：`models/<编号>/` 下的 `.skel`、`.atlas`、`.png` 三个文件放进同一个文件夹（参考 `assets/`）。下载地址里的 `#` 要写成 `%23`。
 3. 看看有哪些动作、坐和睡的原点高度：
 
@@ -21,7 +21,7 @@ brew install pngquant   # 把精灵帧压成 256 色，体积只有三成
    node bbox_probe.js 模型.skel 模型.atlas
    ```
 
-4. 估一下走路速度，作为下一步的 `--walk`（单位/秒，阿米娅用 97，克莱门莎用 125，「于万千宇宙之中」用 100）。有的模型带几根不跟着走的脚部骨骼，速度是 0，会把平均值拉低，只看会动的那几根：
+4. 估一下走路速度，作为下一步的 `--walk`（单位/秒，史尔特尔用 125，假日威龙陈用 143，玛恩纳用 135）。有的模型带几根不跟着走的脚部骨骼，速度是 0，会把平均值拉低，只看会动的那几根（史尔特尔就是这样，脚本给的 64 偏低，按会动的那几根取 125）：
 
    ```sh
    node stride_probe.js 模型.skel 模型.atlas
@@ -64,20 +64,20 @@ brew install pngquant   # 把精灵帧压成 256 色，体积只有三成
 
    文件名前面的序号决定长按时的顺序，`-` 后面是显示的名字。
 
-现有背景用的总览图和裁剪起点（起点是放大 4 倍后的坐标）：
+现有背景用的总览图和裁剪起点（起点是放大 4 倍后的坐标）。顺序按干员分组，每位两到三张：
 
-| 背景 | 总览图 | 起点 x |
-|---|---|---|
-| 1 罗德岛人事办公室 | `office_2021_6.png` | 560 |
-| 2 飞空艇风格宿舍 | `Airship_2024_6.png` | 680 |
-| 3 莱塔尼亚之夜 | `nightView_2020_6.png` | 560 |
-| 4 “兔兔大派对”宴会厅 | `RhodesRabbit_2024_6.png` | 560 |
-| 5 前卫街机厅 | `arcadeHall_2022_6.png` | 440 |
-| 6 哥伦比亚摩登酒店 | `artdeco_2020_6.png` | 560 |
-| 7 卡拉顿花草灯艺屋 | `lightArt_2022_6.png` | 800 |
-| 8 炎式厅堂 | `midAutumn_2020_6.png` | 800 |
-| 9 魂灵秘会 | `spirit_2019_6.png` | 1040 |
-| 10 伊比利亚度假村 | `abyssal_2021_6.png` | 560 |
+| 背景 | 总览图 | 起点 x | 配谁 |
+|---|---|---|---|
+| 1 “求索者之梦”科考小屋 | `volcaRoom_2023_6.png` | 912 | 史尔特尔 |
+| 2 异变梦城堡大厅 | `dreamCastle_2025_6.png` | 683 | 史尔特尔 |
+| 3 “纯白火山”之旅 | `coastCottage_2023_6.png` | 683 | 假日威龙陈 |
+| 4 港都会客室 | `clmsRoom_2026_6.png` | 950 | 假日威龙陈 |
+| 5 神农祭庙会 | `TempleFair_2024_6.png` | 950 | 假日威龙陈 |
+| 6 喀兰贸易接待室 | `tradeLounge_2025_6.png` | 683 | 玛恩纳 |
+| 7 谢拉格游客体验中心 | `winterHouse_2025_6.png` | 397 | 玛恩纳 |
+| 8 雪山小邮局 | `postOffice_2023_6.png` | 1250 | 玛恩纳 |
+
+主题的英文编号在 [ArknightsGameData](https://github.com/Kengxxiao/ArknightsGameData) 的 `building_data.json` 里（`customData.themes`，id 去掉 `furni_set_` 前缀就是文件名前缀）。文件名里的年份猜不出来，挨个年份试一下哪个返回 200 就行。PRTS 的网页接口会挡爬虫（403），但图片 CDN `torappu.prts.wiki` 能直接下。
 
 ## 文件
 
@@ -89,7 +89,7 @@ brew install pngquant   # 把精灵帧压成 256 色，体积只有三成
 | `stride_probe.js` | 估算走路速度 |
 | `upscale_backdrop.py` | 宿舍总览图放大 4 倍（Real-ESRGAN 动漫插画模型） |
 | `make_backdrop.sh` | 宿舍总览图 → 手表背景 |
-| `assets/` | 阿米娅、克莱门莎默认服装的基建小人模型，和阿米娅「于万千宇宙之中」皮肤的 |
+| `assets/` | 史尔特尔、假日威龙陈、玛恩纳默认服装的基建小人模型 |
 | `backdrop-sources/` | 现有背景用到的宿舍总览图。放大后的 `x4/` 不入库，用 `upscale_backdrop.py` 重新生成 |
 
 ## 许可

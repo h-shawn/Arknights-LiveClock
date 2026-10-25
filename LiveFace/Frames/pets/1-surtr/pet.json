@@ -1,0 +1,98 @@
+{
+  "name": "史尔特尔",
+  "kind": "pet",
+  "pixelsPerPoint": 2,
+  "walkSpeed": 41.5,
+  "animations": {
+    "relax": {
+      "name": "Relax",
+      "count": 120,
+      "fps": 15,
+      "size": [
+        223,
+        278
+      ],
+      "anchor": [
+        132.8,
+        274.7
+      ],
+      "bounds": [
+        128.8,
+        88.2
+      ],
+      "lift": 0
+    },
+    "move": {
+      "name": "Move",
+      "count": 80,
+      "fps": 30,
+      "size": [
+        222,
+        286
+      ],
+      "anchor": [
+        136.7,
+        276.1
+      ],
+      "bounds": [
+        130.7,
+        82.3
+      ],
+      "lift": 0
+    },
+    "interact": {
+      "name": "Interact",
+      "count": 45,
+      "fps": 30,
+      "size": [
+        231,
+        283
+      ],
+      "anchor": [
+        141.1,
+        278.9
+      ],
+      "bounds": [
+        137.1,
+        86.9
+      ],
+      "lift": 0
+    },
+    "sit": {
+      "name": "Sit",
+      "count": 60,
+      "fps": 15,
+      "size": [
+        224,
+        264
+      ],
+      "anchor": [
+        138,
+        196.8
+      ],
+      "bounds": [
+        134,
+        84
+      ],
+      "lift": 65
+    },
+    "sleep": {
+      "name": "Sleep",
+      "count": 60,
+      "fps": 15,
+      "size": [
+        301,
+        177
+      ],
+      "anchor": [
+        175.4,
+        134
+      ],
+      "bounds": [
+        163.4,
+        123.6
+      ],
+      "lift": 41
+    }
+  }
+}

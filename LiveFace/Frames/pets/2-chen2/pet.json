@@ -1,0 +1,98 @@
+{
+  "name": "假日威龙陈",
+  "kind": "pet",
+  "pixelsPerPoint": 2,
+  "walkSpeed": 46.8,
+  "animations": {
+    "relax": {
+      "name": "Relax",
+      "count": 45,
+      "fps": 15,
+      "size": [
+        203,
+        281
+      ],
+      "anchor": [
+        108.2,
+        276.5
+      ],
+      "bounds": [
+        104.2,
+        91.8
+      ],
+      "lift": 0
+    },
+    "move": {
+      "name": "Move",
+      "count": 30,
+      "fps": 30,
+      "size": [
+        203,
+        284
+      ],
+      "anchor": [
+        107.9,
+        277
+      ],
+      "bounds": [
+        103.9,
+        92.1
+      ],
+      "lift": 0
+    },
+    "interact": {
+      "name": "Interact",
+      "count": 45,
+      "fps": 30,
+      "size": [
+        213,
+        294
+      ],
+      "anchor": [
+        103,
+        283.1
+      ],
+      "bounds": [
+        100,
+        107
+      ],
+      "lift": 0
+    },
+    "sit": {
+      "name": "Sit",
+      "count": 150,
+      "fps": 15,
+      "size": [
+        216,
+        262
+      ],
+      "anchor": [
+        127.1,
+        190.9
+      ],
+      "bounds": [
+        124.1,
+        86.9
+      ],
+      "lift": 69.1
+    },
+    "sleep": {
+      "name": "Sleep",
+      "count": 135,
+      "fps": 15,
+      "size": [
+        288,
+        188
+      ],
+      "anchor": [
+        167,
+        113.1
+      ],
+      "bounds": [
+        165,
+        117
+      ],
+      "lift": 71.9
+    }
+  }
+}

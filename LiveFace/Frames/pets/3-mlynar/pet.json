@@ -1,0 +1,98 @@
+{
+  "name": "玛恩纳",
+  "kind": "pet",
+  "pixelsPerPoint": 2,
+  "walkSpeed": 42.3,
+  "animations": {
+    "relax": {
+      "name": "Relax",
+      "count": 114,
+      "fps": 15,
+      "size": [
+        156,
+        283
+      ],
+      "anchor": [
+        78.4,
+        274.3
+      ],
+      "bounds": [
+        75.4,
+        73.6
+      ],
+      "lift": 0
+    },
+    "move": {
+      "name": "Move",
+      "count": 75,
+      "fps": 30,
+      "size": [
+        154,
+        283
+      ],
+      "anchor": [
+        71.8,
+        274.7
+      ],
+      "bounds": [
+        68.8,
+        78.2
+      ],
+      "lift": 0
+    },
+    "interact": {
+      "name": "Interact",
+      "count": 60,
+      "fps": 30,
+      "size": [
+        162,
+        280
+      ],
+      "anchor": [
+        85.3,
+        274.9
+      ],
+      "bounds": [
+        82.3,
+        72.7
+      ],
+      "lift": 0
+    },
+    "sit": {
+      "name": "Sit",
+      "count": 30,
+      "fps": 15,
+      "size": [
+        186,
+        255
+      ],
+      "anchor": [
+        79.3,
+        196.2
+      ],
+      "bounds": [
+        75.3,
+        95.7
+      ],
+      "lift": 56.8
+    },
+    "sleep": {
+      "name": "Sleep",
+      "count": 90,
+      "fps": 15,
+      "size": [
+        200,
+        251
+      ],
+      "anchor": [
+        111,
+        193.3
+      ],
+      "bounds": [
+        109,
+        85
+      ],
+      "lift": 55.4
+    }
+  }
+}
