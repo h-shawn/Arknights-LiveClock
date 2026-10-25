@@ -7,6 +7,7 @@
 ```sh
 cd ~/Code/LiveFace/tools/spine
 npm install
+brew install pngquant   # 把精灵帧压成 256 色，体积只有三成
 ```
 
 ## 加一位干员
@@ -33,6 +34,8 @@ npm install
    ```
 
    动作名不叫 Relax、Move、Interact、Sit、Sleep 的，用 `--relax`、`--move`、`--interact`、`--sit`、`--sleep` 指定。
+
+   待机、坐、睡这三个动作按 15 fps 出（`--slow-fps` 改），走路和互动按 30 fps（`--fps` 改）。每帧出来会自动用 pngquant 压成 256 色，体积只有三成，手表上解码一样快（实测真机 2.4 ms/帧，和原图一样；放大看不出差别）。没装 pngquant 会提示一下，帧照出，只是大三倍。已经出好的帧可以事后补压：`sh scripts/compress_frames.sh`。
 
 6. 把输出目录整个放到 `LiveFace/Frames/pets/<序号-名字>/`，在 `pet.json` 里加一行 `"name": "干员名"`。序号决定转表冠时的顺序。
 

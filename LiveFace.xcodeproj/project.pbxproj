@@ -14,6 +14,7 @@
 		AA0000000000000000000205 /* FaceConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000105 /* FaceConfig.swift */; };
 		AA0000000000000000000208 /* Pet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000108 /* Pet.swift */; };
 		AA0000000000000000000209 /* WristMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000109 /* WristMotion.swift */; };
+		AA0000000000000000000210 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000110 /* Settings.swift */; };
 		AA0000000000000000000206 /* Frames in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000106 /* Frames */; };
 		AA0000000000000000000207 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000107 /* Assets.xcassets */; };
 		AA0000000000000000000211 /* LiveFaceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000111 /* LiveFaceWidget.swift */; };
@@ -53,6 +54,7 @@
 		AA0000000000000000000105 /* FaceConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceConfig.swift; sourceTree = "<group>"; };
 		AA0000000000000000000108 /* Pet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pet.swift; sourceTree = "<group>"; };
 		AA0000000000000000000109 /* WristMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WristMotion.swift; sourceTree = "<group>"; };
+		AA0000000000000000000110 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
 		AA0000000000000000000106 /* Frames */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Frames; sourceTree = "<group>"; };
 		AA0000000000000000000107 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA0000000000000000000199 /* LiveFace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LiveFace.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -99,6 +101,7 @@
 				AA0000000000000000000105 /* FaceConfig.swift */,
 				AA0000000000000000000108 /* Pet.swift */,
 				AA0000000000000000000109 /* WristMotion.swift */,
+				AA0000000000000000000110 /* Settings.swift */,
 				AA0000000000000000000106 /* Frames */,
 				AA0000000000000000000107 /* Assets.xcassets */,
 			);
@@ -232,6 +235,7 @@
 				AA0000000000000000000205 /* FaceConfig.swift in Sources */,
 				AA0000000000000000000208 /* Pet.swift in Sources */,
 				AA0000000000000000000209 /* WristMotion.swift in Sources */,
+				AA0000000000000000000210 /* Settings.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -295,7 +299,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = CBHY5D67CX;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = LiveFace;
@@ -315,7 +319,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = CBHY5D67CX;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = LiveFace;
@@ -334,7 +338,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = CBHY5D67CX;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiveFaceWidget/Info.plist;
@@ -357,7 +361,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = CBHY5D67CX;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiveFaceWidget/Info.plist;

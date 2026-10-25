@@ -2,7 +2,7 @@ import SwiftUI
 
 /// 整块“表盘”：背景 + 桌宠 + 时间。转表冠换桌宠，选择都会被记住。
 /// 触摸：轻点戳一下桌宠；按住她（或直接拖）能拎起来、扔出去；在空白处拖动，她会跑来追手指；
-/// 在空白处按住不动换背景。手腕：歪着她会往低的一边滑，甩一下把她颠起来。
+/// 在空白处按住不动换背景，在空白处双击打开设置。手腕：歪着她会往低的一边滑，甩一下把她颠起来。
 struct FaceView: View {
     @Environment(\.isLuminanceReduced) private var isLuminanceReduced
     @Environment(\.scenePhase) private var scenePhase
@@ -13,6 +13,8 @@ struct FaceView: View {
     @State private var toast: String?
     @State private var lifted = false   // 拎着、在空中时把桌宠画到时间上面
     @State private var touch = Touch()
+    @State private var showSettings = false
+    @State private var lastTap = Date.distantPast
     @GestureState private var touching = false
 
     var body: some View {
@@ -50,6 +52,7 @@ struct FaceView: View {
             }
         }
         .ignoresSafeArea()
+        .sheet(isPresented: $showSettings) { SettingsView() }
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 0)
@@ -129,6 +132,14 @@ struct FaceView: View {
         touch.timer?.cancel()
         switch kind {
         case .undecided:
+            // 在空白处连点两下打开设置（第一下还是会戳她一下，当作按下去的反馈）
+            let now = Date()
+            if !touch.onPet, now.timeIntervalSince(lastTap) < 0.4 {
+                lastTap = .distantPast
+                showSettings = true
+                return
+            }
+            lastTap = touch.onPet ? .distantPast : now
             pet.poke()
         case .grab:
             pet.release(throwing: velocity)

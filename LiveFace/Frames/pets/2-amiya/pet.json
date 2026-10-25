@@ -6,8 +6,8 @@
   "animations": {
     "relax": {
       "name": "Relax",
-      "count": 30,
-      "fps": 30,
+      "count": 15,
+      "fps": 15,
       "size": [
         193,
         281

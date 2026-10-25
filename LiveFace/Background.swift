@@ -29,7 +29,7 @@ struct FrameSequence {
     static func load(from directory: URL) -> FrameSequence? {
         let names = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
         let frames = names.filter { $0.hasPrefix("frame-") && $0.hasSuffix(".jpg") }.sorted()
-            .compactMap { try? Data(contentsOf: directory.appendingPathComponent($0)) }
+            .compactMap { try? Data(contentsOf: directory.appendingPathComponent($0), options: .mappedIfSafe) }
         guard !frames.isEmpty else { return nil }
         let manifest = (try? Data(contentsOf: directory.appendingPathComponent("frames.json")))
             .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }

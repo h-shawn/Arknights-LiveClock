@@ -14,20 +14,22 @@ watchOS 不开放第三方表盘，所以它其实是个 App。配合手表的�
     - **歪手腕**：歪得厉害（约 27° 以上）她会往低的一边滑，猛地一歪会撞到屏幕边晕一会儿；坐着的歪得更狠会从凳子上滑下来。拎着、在空中时也会偏向低的一边
     - **甩一下手腕**：把她颠起来，甩得越猛飞得越高，撞到屏幕顶会晕；她还在空中时再甩，能接着颠
     - **在空白处按住不动**：换背景
+    - **在空白处连点两下**：打开设置（时间样式、12/24 小时制、常亮亮度、几点睡觉、手腕灵敏度），改完点「完成」
     - **转表冠**：换角色。背景和角色的选择都会被记住
 
     夜里被弄醒后，她会醒 20 秒左右再接着睡
   - 视频：有 `frame-*.jpg` 时，全屏循环播放
   - 都没有时，播内置的水波动画
-- 五种时间样式，在 `FaceConfig.clockStyle` 里选，默认「顶部」：
+- 五种时间样式，在设置里选（出厂默认「顶部」）：
   - 经典：左下角日期 + 大号时间
   - 菜单：仿 P3R 主菜单，右侧四行斜体
   - 居中：细体大字
   - 顶部：时间和日期在上方，下半屏留给角色（配桌宠用）
   - 纯动画：不画时间，只留右上角系统自带的小时间（其他样式会把系统时间藏掉，避免出现两个时间）
-- 放下手腕（常亮显示）时动画暂停、背景变暗，时间照常每分钟更新
+- 放下手腕（常亮显示）时背景变暗、时间照常每分钟更新；角色不再定格在走一半或者半空中，而是画成站稳（本来在坐、在睡就保持坐、睡）的样子
 - 按屏幕宽高自动缩放，各种尺寸的 Apple Watch 都能用
-- 内存里只放 JPEG 原始数据，播到哪一帧才解码哪一帧，内存占用小
+- 帧数据用内存映射读，不一次性读进内存；播到哪一帧才解码哪一帧，刚解过的三帧留着复用
+- 桌宠精灵帧压成 256 色的 PNG（体积只有三成），待机、坐、睡的动作用 15 fps，走路和互动用 30 fps
 
 ## 需要准备
 
@@ -92,11 +94,13 @@ App 里带了一个复杂功能：明日方舟的游戏图标，写着 Arknights
 
 | 想改什么 | 改哪里 |
 |---|---|
-| 时间样式、12/24 小时制、常亮时背景亮度 | `LiveFace/FaceConfig.swift` |
-| 桌宠站的高度、走动范围、凳子位置、几点睡觉 | `LiveFace/FaceConfig.swift` |
+| 时间样式、12/24 小时制、常亮亮度、几点睡觉、手腕灵敏度 | App 里，空白处连点两下（存在 UserDefaults 里，见 `LiveFace/Settings.swift`） |
+| 这几项的出厂默认值 | `LiveFace/Settings.swift` 里的 `Prefs` |
+| 桌宠站的高度、走动范围、凳子位置 | `LiveFace/FaceConfig.swift` |
 | 桌宠多久走一次、坐多久、待机多久 | `LiveFace/Pet.swift` 里的 `PetBrain` |
-| 歪多少会滑、甩多猛算甩一下 | `LiveFace/Pet.swift` 里的 `Physics`，`LiveFace/WristMotion.swift` 里的 `shakeThreshold` |
+| 歪多少会滑、甩多猛算甩一下 | 先在设置里调「手腕灵敏度」；基准值在 `LiveFace/Pet.swift` 的 `Physics` 和 `LiveFace/WristMotion.swift` 的 `shakeThreshold` |
 | 表盘复杂功能的图标和文字 | `LiveFaceWidget/LiveFaceWidget.swift`；换了 App 图标后用 `scripts/make_complication_icons.py` 重新生成复杂功能的图标 |
+| 桌宠精灵帧的体积 | `sh scripts/compress_frames.sh` 把帧压成 256 色（需要 `brew install pngquant`），体积降到三成，手表上解码一样快 |
 | 时间的字号、位置、颜色；加新样式 | `LiveFace/ClockStyles.swift` |
 | 没放视频时的默认动画 | `LiveFace/Background.swift` 里的 `WaveBackground` |
 
@@ -109,6 +113,7 @@ App 里带了一个复杂功能：明日方舟的游戏图标，写着 Arknights
 - 右上角的系统时间是用 SwiftUI 没写进文档的 `_statusBarHidden` 藏掉的（公开文档里的 `persistentSystemOverlays`、`toolbar(.hidden)` 等写法在 watchOS 上都无效）。在 watchOS 27 模拟器上验证有效，但以后的系统更新可能让它失效；这种 App 也不适合上架。
 - 常亮显示时动画停住，这是 watchOS 对所有 App 的限制。
 - 比静态表盘耗电：抬腕亮屏期间一直在解码、绘制画面，还会读运动传感器。
+- 手表上的 ImageIO 不支持 WebP；HEIC 虽然支持，但真机上解一帧要 10 ms，是 PNG 的四倍，不适合逐帧播。所以精灵帧还是 PNG，只是压成了 256 色。
 - 免费签名 7 天后过期。
 
 ## 致谢

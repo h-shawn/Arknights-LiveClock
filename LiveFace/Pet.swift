@@ -85,6 +85,21 @@ struct PetSprites {
     let clips: [String: Clip]
     let pixelsPerPoint: CGFloat
     let walkSpeed: CGFloat     // 46mm 屏幕上每秒走多少点
+    let cache = FrameCache()
+
+    /// 刚解码过的几帧。待机、坐、睡只有 15 fps，画面按 30 fps 刷，同一张图没必要解两次。
+    /// 一帧解开约 270 KB，留三张就够了
+    final class FrameCache {
+        private var entries: [(key: String, image: CGImage)] = []
+
+        func image(_ key: String, decode: () -> CGImage?) -> CGImage? {
+            if let hit = entries.first(where: { $0.key == key }) { return hit.image }
+            guard let image = decode() else { return nil }
+            entries.insert((key, image), at: 0)
+            if entries.count > 3 { entries.removeLast() }
+            return image
+        }
+    }
 
     /// 站着时的身高（像素，脚底到头顶）：取待机动作的原点离图顶多远
     var height: CGFloat { clips["relax"]!.anchor.y }
@@ -92,7 +107,8 @@ struct PetSprites {
     var center: CGFloat { height * 0.45 }
 
     static func decodeImage(at url: URL) -> CGImage? {
-        guard let data = try? Data(contentsOf: url), let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        guard let data = try? Data(contentsOf: url, options: .mappedIfSafe),
+              let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
         return CGImageSourceCreateImageAtIndex(source, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary)
     }
 
@@ -107,8 +123,10 @@ struct PetSprites {
         var clips: [String: Clip] = [:]
         for (role, info) in animations {
             let count = info["count"] as? Int ?? 0
+            // 内存映射：帧数据留在闪存里，系统按需换页，不用一上来就读十几 MB 进内存
             let frames = (0..<count).compactMap {
-                try? Data(contentsOf: directory.appendingPathComponent(String(format: "pet-%@-%04d.png", role, $0)))
+                try? Data(contentsOf: directory.appendingPathComponent(String(format: "pet-%@-%04d.png", role, $0)),
+                          options: .mappedIfSafe)
             }
             // 旧版 pet.json 把尺寸和锚点写在顶层，所有动作共用
             guard count > 0, frames.count == count,
@@ -123,11 +141,16 @@ struct PetSprites {
     }
 
     /// 循环动作按时间取余，一次性动作停在最后一帧
-    func image(_ clip: Clip, elapsed: TimeInterval, loops: Bool) -> CGImage? {
+    func image(_ role: String, elapsed: TimeInterval, loops: Bool) -> CGImage? {
+        let name = clips[role] != nil ? role : "relax"
+        guard let clip = clips[name] else { return nil }
         let frame = Int(max(0, elapsed) * clip.fps)
         let index = loops ? frame % clip.frames.count : min(frame, clip.frames.count - 1)
-        guard let source = CGImageSourceCreateWithData(clip.frames[index] as CFData, nil) else { return nil }
-        return CGImageSourceCreateImageAtIndex(source, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary)
+        return cache.image("\(name)-\(index)") {
+            CGImageSourceCreateWithData(clip.frames[index] as CFData, nil).flatMap {
+                CGImageSourceCreateImageAtIndex($0, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary)
+            }
+        }
     }
 }
 
@@ -185,10 +208,10 @@ final class PetBrain {
         static let dizzySpeed: CGFloat = 900   // 落地快过这个会晕
         static let bonkSpeed: CGFloat = 500    // 撞屏幕边快过这个也会晕
         static let maxSwing = 1.0              // 拎着最多晃多大（弧度，约 57°）
-        // 手腕的倾斜按重力在屏幕左右方向的分量算（-1…1）
-        static let slipTilt: CGFloat = 0.45    // 站着时歪过这个（约 27°）站不稳，开始滑
+        // 手腕的倾斜按重力在屏幕左右方向的分量算（-1…1）。设置页里的「手腕灵敏度」会乘上去
+        static var slipTilt: CGFloat { 0.45 * Prefs.motionScale }    // 站着时歪过这个（约 27°）站不稳，开始滑
         static let slideFriction: CGFloat = 0.3 // 滑起来以后的摩擦：歪得比这个小就慢慢停下
-        static let fallOffTilt: CGFloat = 0.6  // 坐着时歪过这个（约 37°）从凳子上滑下来
+        static var fallOffTilt: CGFloat { 0.6 * Prefs.motionScale }  // 坐着时歪过这个（约 37°）从凳子上滑下来
         static let leanDeadZone: CGFloat = 0.15 // 在空中、拎着时，歪得比这个小不算，免得看表姿势不同她就飘
     }
 
@@ -684,6 +707,26 @@ final class PetBrain {
         }
     }
 
+    /// 放下手腕（常亮显示）时画的那一帧：不管此刻在走路还是在半空中，都画成站稳的样子
+    /// （本来在坐、在睡就保持坐、睡），免得定格在走一半或者飘在空中
+    func restPose(sprites: PetSprites, size: CGSize) -> Pose {
+        let k = size.width / 208 / sprites.pixelsPerPoint
+        let ground = size.height * FaceConfig.petGround
+        var role = "relax"
+        var fraction = x
+        switch action {
+        case .sit: role = "sit"
+        case .sleep: role = "sleep"
+        case .walk: fraction = position(at: Date())
+        case .held, .falling: fraction = min(max(body.center.x / size.width, 0.08), 0.92)
+        default: break
+        }
+        if sprites.clips[role] == nil { role = "relax" }
+        let lift = (sprites.clips[role]?.lift ?? 0) * k
+        return Pose(role: role, elapsed: 0, loops: true,
+                    root: CGPoint(x: fraction * size.width, y: ground - lift), facing: facing)
+    }
+
     /// 落地时以脚底为轴压扁，再弹回来
     private func squash(at date: Date) -> CGFloat {
         guard let landedAt else { return 1 }
@@ -748,39 +791,50 @@ struct PetLayer: View {
         GeometryReader { geo in
             let k = geo.size.width / 208 / sprites.pixelsPerPoint   // 精灵像素 → 屏幕点
             let ground = geo.size.height * FaceConfig.petGround
-            TimelineView(.animation(minimumInterval: 1.0 / 30, paused: paused)) { context in
-                let pose = brain.pose(at: context.date, sprites: sprites, size: geo.size)
-                if let clip = sprites.clips[pose.role] ?? sprites.clips["relax"],
-                   let image = sprites.image(clip, elapsed: pose.elapsed, loops: pose.loops) {
-                    let w = clip.size.width * k, h = clip.size.height * k
-                    let ax = clip.anchor.x * k, ay = clip.anchor.y * k
-                    ZStack {
-                        if pose.role == "sleep" {
-                            // 垫子：铺在身体正下方
-                            RoundedRectangle(cornerRadius: 3 * k * 2)
-                                .fill(Color(red: 0.16, green: 0.2, blue: 0.3))
-                                .frame(width: w * 0.8, height: 7 * k * 2)
-                                .position(x: pose.root.x + (w / 2 - ax) * pose.facing, y: ground - 2 * k * 2)
-                        }
-                        Image(decorative: image, scale: 1)
-                            .resizable()
-                            .frame(width: w, height: h)
-                            // 以原点为轴水平翻转（转身时脚不挪位），落地时也以原点为轴压扁
-                            .scaleEffect(x: pose.facing * (1 + (1 - pose.squash) * 0.6), y: pose.squash,
-                                         anchor: UnitPoint(x: ax / w, y: ay / h))
-                            // 拎着晃、扔出去转，都绕重心
-                            .rotationEffect(.radians(pose.angle), anchor: UnitPoint(x: ax / w, y: (ay - sprites.center * k) / h))
-                            .position(x: pose.root.x - ax + w / 2, y: pose.root.y - ay + h / 2)
-                        if pose.role == "sleep" {
-                            Snore(time: context.date.timeIntervalSinceReferenceDate, size: 12 * k * 2)
-                                .position(x: pose.root.x - ax * 0.55 * pose.facing, y: pose.root.y - ay - 6 * k * 2)
-                        }
-                        if pose.dizzy {
-                            // 绕着头顶转（图的上沿差不多就是头顶，站着坐着都适用）
-                            DizzyStars(time: context.date.timeIntervalSinceReferenceDate, size: 11 * k * 2)
-                                .position(x: pose.root.x, y: pose.root.y - ay + sprites.height * 0.06 * k)
-                        }
-                    }
+            if paused {
+                // 放下手腕（常亮显示）：画一张站稳的静止画面，不定格在走一半或者半空中
+                figure(brain.restPose(sprites: sprites, size: geo.size), k: k, ground: ground, time: nil)
+            } else {
+                TimelineView(.animation(minimumInterval: 1.0 / 30)) { context in
+                    figure(brain.pose(at: context.date, sprites: sprites, size: geo.size), k: k, ground: ground,
+                           time: context.date.timeIntervalSinceReferenceDate)
+                }
+            }
+        }
+    }
+
+    /// 画某一帧。time 为 nil 表示常亮显示的静止画面，这时不画打呼的 z 和摔晕的星星
+    @ViewBuilder
+    private func figure(_ pose: PetBrain.Pose, k: CGFloat, ground: CGFloat, time: TimeInterval?) -> some View {
+        if let clip = sprites.clips[pose.role] ?? sprites.clips["relax"],
+           let image = sprites.image(pose.role, elapsed: pose.elapsed, loops: pose.loops) {
+            let w = clip.size.width * k, h = clip.size.height * k
+            let ax = clip.anchor.x * k, ay = clip.anchor.y * k
+            ZStack {
+                if pose.role == "sleep" {
+                    // 垫子：铺在身体正下方
+                    RoundedRectangle(cornerRadius: 3 * k * 2)
+                        .fill(Color(red: 0.16, green: 0.2, blue: 0.3))
+                        .frame(width: w * 0.8, height: 7 * k * 2)
+                        .position(x: pose.root.x + (w / 2 - ax) * pose.facing, y: ground - 2 * k * 2)
+                }
+                Image(decorative: image, scale: 1)
+                    .resizable()
+                    .frame(width: w, height: h)
+                    // 以原点为轴水平翻转（转身时脚不挪位），落地时也以原点为轴压扁
+                    .scaleEffect(x: pose.facing * (1 + (1 - pose.squash) * 0.6), y: pose.squash,
+                                 anchor: UnitPoint(x: ax / w, y: ay / h))
+                    // 拎着晃、扔出去转，都绕重心
+                    .rotationEffect(.radians(pose.angle), anchor: UnitPoint(x: ax / w, y: (ay - sprites.center * k) / h))
+                    .position(x: pose.root.x - ax + w / 2, y: pose.root.y - ay + h / 2)
+                if pose.role == "sleep", let time {
+                    Snore(time: time, size: 12 * k * 2)
+                        .position(x: pose.root.x - ax * 0.55 * pose.facing, y: pose.root.y - ay - 6 * k * 2)
+                }
+                if pose.dizzy, let time {
+                    // 绕着头顶转（图的上沿差不多就是头顶，站着坐着都适用）
+                    DizzyStars(time: time, size: 11 * k * 2)
+                        .position(x: pose.root.x, y: pose.root.y - ay + sprites.height * 0.06 * k)
                 }
             }
         }

@@ -12,6 +12,7 @@
 const fs = require("fs");
 const path = require("path");
 const { PNG } = require("pngjs");
+const { execFileSync } = require("child_process");
 
 const spine = new Function(fs.readFileSync(path.join(__dirname, "spine-core-3.8.js"), "utf8") + "\nreturn spine;")();
 
@@ -67,7 +68,7 @@ const roles = {
   sleep: typeof opts.sleep === "string" ? opts.sleep : "Sleep",  // 可选：睡觉（原点是床面）
 };
 const fps = Number(opts.fps || 30);
-const slowFps = Number(opts["slow-fps"] || 15);   // 坐、睡动作慢，用低帧率省空间
+const slowFps = Number(opts["slow-fps"] || 15);   // 待机、坐、睡动作慢，用低帧率省空间，手表上也少解一半的帧
 const SS = Number(opts.ss || 2);
 const clips = {};
 for (const [role, name] of Object.entries(roles)) {
@@ -76,7 +77,7 @@ for (const [role, name] of Object.entries(roles)) {
     if (role === "sit" || role === "sleep") continue;
     console.error(`没有这个动画：${name}（${role}）`); process.exit(1);
   }
-  const f = role === "sit" || role === "sleep" ? slowFps : fps;
+  const f = role === "relax" || role === "sit" || role === "sleep" ? slowFps : fps;
   clips[role] = { animation, fps: f, frames: Math.max(1, Math.round(animation.duration * f)) };
 }
 
@@ -199,6 +200,16 @@ function triangle(m, p0, p1, p2) {
   }
 }
 
+// 帧压成 256 色的 PNG：体积约为原来的三成，手表上解码一样快。没装 pngquant 就留原图
+const hasPngquant = (() => {
+  try { execFileSync("pngquant", ["--version"], { stdio: "ignore" }); return true; } catch { return false; }
+})();
+if (!hasPngquant) console.warn("没装 pngquant（brew install pngquant），帧会比压过的大三倍");
+const quantize = (file) => {
+  if (!hasPngquant) return;
+  try { execFileSync("pngquant", ["--force", "--strip", "--speed", "1", "--skip-if-larger", "--ext", ".png", "--", file]); } catch {}
+};
+
 fs.mkdirSync(outDir, { recursive: true });
 for (const f of fs.readdirSync(outDir)) if (/^pet-.*\.png$/.test(f)) fs.unlinkSync(path.join(outDir, f));
 let bytes = 0;
@@ -225,6 +236,7 @@ for (const [role, clip] of Object.entries(clips)) {
     }
     const file = path.join(outDir, `pet-${role}-${String(i).padStart(4, "0")}.png`);
     fs.writeFileSync(file, PNG.sync.write(png));
+    quantize(file);
     bytes += fs.statSync(file).size;
   }
 }

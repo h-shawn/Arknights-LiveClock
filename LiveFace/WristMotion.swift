@@ -6,8 +6,9 @@ import WatchKit
 final class WristMotion {
     static let shared = WristMotion()
 
-    /// 加速度超过这个（g）算甩了一下；举起手腕看表、走路都到不了
-    static let shakeThreshold: CGFloat = 1.6
+    /// 加速度超过这个（g）算甩了一下；举起手腕看表、走路都到不了。
+    /// 设置页里的「手腕灵敏度」会乘上去
+    static var shakeThreshold: CGFloat { 1.6 * Prefs.motionScale }
 
     /// 屏幕左右方向的倾斜：-1…1，正数是右边低。平滑过，手轻轻抖不算
     private(set) var tilt: CGFloat = 0

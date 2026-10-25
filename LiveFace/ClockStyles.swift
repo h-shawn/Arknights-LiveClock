@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// 时间样式，用哪种在 FaceConfig.clockStyle 里设。想加新样式：加一个 case，再在 ClockView 里接上对应的 View。
+/// 时间样式，在 App 的设置页里选（空白处双击打开），出厂默认在 Prefs.clockStyle。
+/// ClockStyle 的 rawValue 存进 UserDefaults，所以不要改现有 case 的顺序。想加新样式：加一个 case，再在 ClockView 里接上对应的 View。
 /// 所有尺寸都按 46mm 屏幕（208×248 点）设计，其他尺寸按屏幕宽高等比缩放。
 enum ClockStyle: Int, CaseIterable {
     case classic   // 左下：日期 + 大号时间
@@ -29,7 +30,12 @@ private enum Format {
     /// 用系统首选语言格式化日期。App 本身没做本地化，直接用 Locale.current 会变成英文日期。
     static let locale = Locale(identifier: Locale.preferredLanguages.first ?? "en_US")
 
-    static func time(_ date: Date) -> String { timeFormatter.string(from: date) }
+    static func time(_ date: Date) -> String {
+        // 12/24 小时制随时能在设置里改，每次按当前设置取格式
+        let format = FaceConfig.use24Hour ? "HH:mm" : "h:mm"
+        if timeFormatter.dateFormat != format { timeFormatter.dateFormat = format }
+        return timeFormatter.string(from: date)
+    }
 
     static func date(_ date: Date) -> String {
         date.formatted(.dateTime.month(.defaultDigits).day().weekday(.abbreviated).locale(locale))
@@ -38,7 +44,6 @@ private enum Format {
     private static let timeFormatter: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = FaceConfig.use24Hour ? "HH:mm" : "h:mm"
         return f
     }()
 }
