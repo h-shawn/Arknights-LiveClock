@@ -218,6 +218,8 @@ for (const [role, clip] of Object.entries(clips)) {
   useClip(clip);
   const png = new PNG({ width: W, height: H });
   clip.size = [W, H];
+  clip.minOpaque = W;
+  clip.maxOpaque = 0;
   clip.anchor = [(0 - clip.minX) * scale + pad, (clip.maxY - 0) * scale + pad];
   for (let i = 0; i < frames; i++) {
     pose(animation, frames, i);
@@ -234,6 +236,13 @@ for (const [role, clip] of Object.entries(clips)) {
       png.data[o] = Math.min(255, Math.round(r * k)); png.data[o + 1] = Math.min(255, Math.round(g * k));
       png.data[o + 2] = Math.min(255, Math.round(b * k)); png.data[o + 3] = Math.round(al * 255);
     }
+    // 记下不透明部分最左、最右到哪：图的四周多是透明的，App 按这个算她站在哪不会被屏幕边切掉
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (png.data[(y * W + x) * 4 + 3] > 8) {
+        if (x < clip.minOpaque) clip.minOpaque = x;
+        if (x + 1 > clip.maxOpaque) clip.maxOpaque = x + 1;
+      }
+    }
     const file = path.join(outDir, `pet-${role}-${String(i).padStart(4, "0")}.png`);
     fs.writeFileSync(file, PNG.sync.write(png));
     quantize(file);
@@ -249,6 +258,8 @@ const manifest = {
   walkSpeed: round1((walkUnits * scale) / 2),   // 46mm 屏幕上每秒走多少点
   animations: Object.fromEntries(Object.entries(clips).map(([role, c]) => [role, {
     name: c.animation.name, count: c.frames, fps: c.fps, size: c.size, anchor: c.anchor.map(round1),
+    // 原点到不透明部分最左、最右的距离（像素）
+    bounds: [round1(c.anchor[0] - c.minOpaque), round1(c.maxOpaque - c.anchor[0])],
     // 坐、睡的原点是椅面/床面：原点要抬离地面多少像素，身体最低点才刚好贴地
     lift: role === "sit" || role === "sleep" ? round1(Math.max(0, -c.minY) * scale) : 0,
   }])),

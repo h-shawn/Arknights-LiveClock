@@ -64,7 +64,11 @@ struct SettingsView: View {
     @AppStorage(Prefs.Key.sleepTo) private var sleepTo = 7
     @AppStorage(Prefs.Key.sensitivity) private var sensitivity = Prefs.Sensitivity.normal.rawValue
 
-    private static let styleNames = ["左下大字", "仿 P3R 菜单", "居中细体", "顶部", "不画时间"]
+    // 「仿 P3R 菜单」是给视频模式做的版式，桌宠模式用不上，不列在这儿。
+    // ClockStyle.menu 还在，想用就改 Prefs.clockStyle 的出厂值
+    private static let styles: [(ClockStyle, String)] = [
+        (.classic, "左下大字"), (.center, "居中细体"), (.top, "顶部"), (.none, "不画时间"),
+    ]
     private static let brightness: [(String, Int)] = [("暗", 20), ("中", 35), ("亮", 60)]
 
     var body: some View {
@@ -72,8 +76,8 @@ struct SettingsView: View {
             List {
                 Section("时间") {
                     Picker("样式", selection: $clockStyle) {
-                        ForEach(Array(Self.styleNames.enumerated()), id: \.offset) { i, name in
-                            Text(name).tag(i)
+                        ForEach(Self.styles, id: \.0) { style, name in
+                            Text(name).tag(style.rawValue)
                         }
                     }
                     .pickerStyle(.navigationLink)

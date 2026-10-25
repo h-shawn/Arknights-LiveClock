@@ -78,6 +78,9 @@ struct PetSprites {
         let size: CGSize       // 精灵图的像素尺寸
         let anchor: CGPoint    // 骨骼原点在图里的像素位置：站着是脚底，坐是椅面，睡是床面
         let lift: CGFloat      // 原点要离地多少像素（坐、睡才有）
+        // 原点到画面上不透明部分最左、最右的距离（像素）。图的四周多是透明的，
+        // 按这个算她站在哪才不会被屏幕边切掉
+        let bounds: (left: CGFloat, right: CGFloat)
         var duration: TimeInterval { Double(frames.count) / fps }
     }
 
@@ -131,14 +134,44 @@ struct PetSprites {
             // 旧版 pet.json 把尺寸和锚点写在顶层，所有动作共用
             guard count > 0, frames.count == count,
                   let size = point(info["size"] ?? json["size"]), let anchor = point(info["anchor"] ?? json["anchor"]) else { continue }
+            // 旧素材没写 bounds，就按整张图算（和以前一样）
+            let bounds = (info["bounds"] as? [Double]).flatMap { $0.count == 2 ? $0 : nil }
+                ?? [anchor.x, size.x - anchor.x]
             clips[role] = Clip(frames: frames, fps: info["fps"] as? Double ?? 30, size: CGSize(width: size.x, height: size.y),
-                               anchor: anchor, lift: info["lift"] as? Double ?? 0)
+                               anchor: anchor, lift: info["lift"] as? Double ?? 0,
+                               bounds: (CGFloat(bounds[0]), CGFloat(bounds[1])))
         }
         guard clips["relax"] != nil else { return nil }
         return PetSprites(name: json["name"] as? String ?? directory.lastPathComponent, clips: clips,
                           pixelsPerPoint: json["pixelsPerPoint"] as? Double ?? 2,
                           walkSpeed: json["walkSpeed"] as? Double ?? 30)
     }
+
+    /// 某个动作的身体，原点左右各占屏幕宽度的多少
+    func extents(_ roles: String...) -> (left: CGFloat, right: CGFloat) {
+        let unit = 208 * pixelsPerPoint
+        return roles.compactMap { clips[$0] }.reduce((0, 0)) {
+            (max($0.left, $1.bounds.left / unit), max($0.right, $1.bounds.right / unit))
+        }
+    }
+
+    /// 把想要的落点范围挪进「身体完整留在屏幕里」的范围。
+    /// 身体比屏幕还宽（克莱门莎躺下就是）就居中，两边均摊着出去一点
+    func fit(_ preferred: ClosedRange<CGFloat>, within extents: (left: CGFloat, right: CGFloat)) -> ClosedRange<CGFloat> {
+        let margin: CGFloat = 0.02   // 身体离屏幕边至少留这么点（屏幕宽度的比例）
+        let lo = extents.left + margin, hi = 1 - extents.right - margin
+        guard lo <= hi else {
+            let center = extents.left + (1 - extents.left - extents.right) / 2
+            return center...center
+        }
+        let a = min(max(preferred.lowerBound, lo), hi), b = min(max(preferred.upperBound, lo), hi)
+        return min(a, b)...max(a, b)
+    }
+
+    /// 走动、站着的落点范围：站、走、互动三个动作都要放得下
+    var walkRange: ClosedRange<CGFloat> { fit(FaceConfig.petRange, within: extents("relax", "move", "interact")) }
+    /// 躺下的落点范围
+    var sleepRange: ClosedRange<CGFloat> { fit(FaceConfig.petSleepRange, within: extents("sleep")) }
 
     /// 循环动作按时间取余，一次性动作停在最后一帧
     func image(_ role: String, elapsed: TimeInterval, loops: Bool) -> CGImage? {
@@ -420,7 +453,7 @@ final class PetBrain {
             switch arrival {
             case .relax: relax(from: end, seconds: 3...8)
             case .sit: begin(.sit(until: end + .random(in: 8...16)), at: end)
-            case .sleep: sleep(from: end)
+            case .sleep: sleep(from: end, sprites: sprites)
             }
         case .sit(let until):
             guard date >= until || night else { return false }
@@ -443,8 +476,9 @@ final class PetBrain {
         if sprites.clips["sit"] != nil, roll < 0.3 {
             walk(from: date, to: FaceConfig.petStoolX, arrival: .sit, speed: sprites.walkSpeed)
         } else if roll < 0.85 {
-            var target = CGFloat.random(in: FaceConfig.petRange)
-            if abs(target - x) < 0.15 { target = x < 0.5 ? FaceConfig.petRange.upperBound : FaceConfig.petRange.lowerBound }
+            let range = sprites.walkRange
+            var target = CGFloat.random(in: range)
+            if abs(target - x) < 0.15 { target = x < 0.5 ? range.upperBound : range.lowerBound }
             walk(from: date, to: target, arrival: .relax, speed: sprites.walkSpeed)
         } else {
             relax(from: date, seconds: 3...6)
@@ -453,11 +487,12 @@ final class PetBrain {
 
     /// 夜里先走到垫子那儿再躺下（被扔到别处也会自己走回去）
     private func goToBed(from date: Date, sprites: PetSprites) {
-        let bed = min(max(x, FaceConfig.petSleepRange.lowerBound), FaceConfig.petSleepRange.upperBound)
+        let range = sprites.sleepRange
+        let bed = min(max(x, range.lowerBound), range.upperBound)
         if abs(bed - x) > 0.01 {
             walk(from: date, to: bed, arrival: .sleep, speed: sprites.walkSpeed)
         } else {
-            sleep(from: date)
+            sleep(from: date, sprites: sprites)
         }
     }
 
@@ -476,9 +511,10 @@ final class PetBrain {
         begin(.relax(until: date + .random(in: seconds)), at: date)
     }
 
-    private func sleep(from date: Date) {
-        // 躺下比站着宽很多：固定在凳子左边、头朝左，不被屏幕边切掉，也不压到凳子
-        x = min(max(x, FaceConfig.petSleepRange.lowerBound), FaceConfig.petSleepRange.upperBound)
+    private func sleep(from date: Date, sprites: PetSprites) {
+        // 躺下比站着宽很多：按睡姿图自己的宽度挑落点，头和脚都不出屏幕
+        let range = sprites.sleepRange
+        x = min(max(x, range.lowerBound), range.upperBound)
         facing = 1
         begin(.sleep, at: date)
     }
