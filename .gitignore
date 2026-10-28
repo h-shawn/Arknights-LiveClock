@@ -13,3 +13,12 @@ tools/spine/backdrop-sources/x4/
 
 # 原始视频（P3R 官网视频等），不入库
 videos/
+
+# 自己换的复杂功能头像：avatar-source.png 是放进来的原图，avatar-local-* 是它生成的。
+# 可能是别人的同人图，只在自己表上用，不入库。入库的始终是小人裁出来的 avatar-*
+LiveFace/Frames/pets/*/avatar-source.png
+LiveFace/Frames/pets/*/avatar-local-*.png
+
+# Python 跑脚本时产生的缓存
+__pycache__/
+*.pyc

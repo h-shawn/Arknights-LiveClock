@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 /// 整块“表盘”：背景 + 桌宠 + 时间。转表冠换桌宠，选择都会被记住。
 /// 触摸：轻点戳一下桌宠；按住她（或直接拖）能拎起来、扔出去；在空白处拖动，她会跑来追手指；
@@ -6,8 +7,9 @@ import SwiftUI
 struct FaceView: View {
     @Environment(\.isLuminanceReduced) private var isLuminanceReduced
     @Environment(\.scenePhase) private var scenePhase
-    @AppStorage("petIndex") private var petIndex = 0
-    @AppStorage("backgroundIndex") private var backgroundIndex = 0
+    // 和表盘复杂功能共用一份存储，换了干员表盘上的头像也跟着换
+    @AppStorage(Prefs.Key.petIndex, store: Prefs.store) private var petIndex = 0
+    @AppStorage(Prefs.Key.backgroundIndex, store: Prefs.store) private var backgroundIndex = 0
     @State private var pet = PetBrain()
     @State private var crown = 0.0
     @State private var toast: String?
@@ -64,6 +66,11 @@ struct FaceView: View {
         .onChange(of: touching) { _, now in
             if !now { touchEnded(throwing: .zero) }
         }
+        // 第一次打开时要一下运动数据的权限，顺便刷新表盘上的圆环
+        .onAppear {
+            ActivityRings.requestAccess()
+            WidgetCenter.shared.reloadAllTimelines()
+        }
         // 亮着屏、在前台时才开运动传感器
         .onAppear(perform: updateMotion)
         .onChange(of: scenePhase, updateMotion)
@@ -80,6 +87,7 @@ struct FaceView: View {
             petIndex = ((petIndex + step) % count + count) % count
             pet = PetBrain()
             showToast(PetRoster.sprites(at: petIndex)?.name)
+            WidgetCenter.shared.reloadAllTimelines()
         }
         // 右上角的系统时间：自己画了时间就藏起来，纯动画样式留着它。
         // _statusBarHidden 是 SwiftUI 公开但没写进文档的接口，系统更新后可能失效。

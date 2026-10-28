@@ -84,22 +84,30 @@ swift scripts/make_frames.swift ~/Downloads/你的视频.mp4 --start 3 --duratio
 
 ## 4. 在系统表盘上放一个快捷入口
 
-App 里带了一个复杂功能：明日方舟的游戏图标，写着 Arknights LiveFace，点一下直接打开 LiveFace。
+App 里带了一个复杂功能，放在长条位置时显示三样东西：**当前干员的头像**、**另一座城市的时间**、**今天的运动圆环**。点一下直接打开 LiveFace。圆形和角落位置只放头像，时间当弯曲的小标签显示。
 
-在手表上长按系统表盘 → 编辑 → 往左滑到「复杂功能」→ 点一个位置 → 在列表里找到「LiveFace」，选「Arknights LiveFace」。圆形、角落、长条位置都能放，也能加到智能叠放里。也可以在 iPhone「Watch」App 里编辑表盘。
+在手表上长按系统表盘 → 编辑 → 往左滑到「复杂功能」→ 点一个位置 → 在列表里找到「LiveFace」。也可以在 iPhone「Watch」App 里编辑表盘。
 
-彩色表盘（比如颜色选了「多色」）上显示原来的彩色图标；单色表盘上显示成黑白的。
+- **头像**：跟着你在 App 里选的干员变，从基建小人的待机首帧裁出来（`scripts/make_pet_avatars.py` 生成，加干员后跑一次）
+- **城市**：在 App 的设置页里选（空白处双击打开），表盘上显示英文名。做法是把时刻按时差整体挪一下再交给系统画，这样每分钟自动走字，不占复杂功能的刷新配额
+- **运动圆环**：外红内青依次是活动、锻炼、站立，和系统「体能训练」读的是同一份 `HKActivitySummary`。第一次打开 App 会问一次健康数据权限，不给就只显示头像和时间。圆环**一小时刷一次**，另外每次打开 App 也会刷一次——复杂功能的刷新次数系统有配额，做不到实时
+
+彩色表盘（颜色选「多色」）上头像是彩色的、圆环是原本的红绿蓝；单色表盘上头像变黑白。这是系统行为：单色表盘只按透明度画图片，所以代码里备了一套「白色 + 透明度=明暗」的黑白头像。圆环是画出来的形状不是图片，两种表盘都正常。
+
+App 和复杂功能靠 App Group `group.com.shawn.liveface` 共享设置（免费账号也能用，Xcode 会自动创建）。
 
 ## 自定义
 
 | 想改什么 | 改哪里 |
 |---|---|
-| 时间样式、12/24 小时制、常亮亮度、几点睡觉、手腕灵敏度 | App 里，空白处连点两下（存在 UserDefaults 里，见 `LiveFace/Settings.swift`） |
+| 时间样式、12/24 小时制、常亮亮度、几点睡觉、手腕灵敏度、表盘上显示哪座城市的时间 | App 里，空白处连点两下（存在 App Group 的 UserDefaults 里，见 `LiveFace/Settings.swift`） |
 | 这几项的出厂默认值 | `LiveFace/Settings.swift` 里的 `Prefs` |
 | 桌宠站的高度、走动范围、凳子位置 | `LiveFace/FaceConfig.swift` |
 | 桌宠多久走一次、坐多久、待机多久 | `LiveFace/Pet.swift` 里的 `PetBrain` |
 | 歪多少会滑、甩多猛算甩一下 | 先在设置里调「手腕灵敏度」；基准值在 `LiveFace/Pet.swift` 的 `Physics` 和 `LiveFace/WristMotion.swift` 的 `shakeThreshold` |
-| 表盘复杂功能的图标和文字 | `LiveFaceWidget/LiveFaceWidget.swift`；换了 App 图标后用 `scripts/make_complication_icons.py` 重新生成复杂功能的图标 |
+| 表盘复杂功能的版式 | `LiveFaceWidget/LiveFaceWidget.swift` |
+| 复杂功能里的干员头像 | `python3 scripts/make_pet_avatars.py`（加了干员就跑一次）。想在自己表上换成别的图：把图放进 `LiveFace/Frames/pets/<干员>/avatar-source.png` 再跑一次，会额外生成优先使用的 `avatar-local-*`，这两样都在 `.gitignore` 里不会入库 |
+| 可选的城市列表 | `LiveFace/Settings.swift` 里的 `Prefs.cities`，加一行要同时在 `LiveFaceWidget/LiveFaceWidget.swift` 的 `PetAvatars.names` 里加英文名 |
 | 桌宠精灵帧的体积 | `sh scripts/compress_frames.sh` 把帧压成 256 色（需要 `brew install pngquant`），体积降到三成，手表上解码一样快 |
 | 时间的字号、位置、颜色；加新样式 | `LiveFace/ClockStyles.swift` |
 | 没放视频时的默认动画 | `LiveFace/Background.swift` 里的 `WaveBackground` |
@@ -113,6 +121,7 @@ App 里带了一个复杂功能：明日方舟的游戏图标，写着 Arknights
 - 右上角的系统时间是用 SwiftUI 没写进文档的 `_statusBarHidden` 藏掉的（公开文档里的 `persistentSystemOverlays`、`toolbar(.hidden)` 等写法在 watchOS 上都无效）。在 watchOS 27 模拟器上验证有效，但以后的系统更新可能让它失效；这种 App 也不适合上架。
 - 常亮显示时动画停住，这是 watchOS 对所有 App 的限制。
 - 比静态表盘耗电：抬腕亮屏期间一直在解码、绘制画面，还会读运动传感器。
+- 表盘上的运动圆环一小时才刷一次，刚运动完不会马上变（复杂功能的刷新配额限制）。
 - 手表上的 ImageIO 不支持 WebP；HEIC 虽然支持，但真机上解一帧要 10 ms，是 PNG 的四倍，不适合逐帧播。所以精灵帧还是 PNG，只是压成了 256 色。
 - 免费签名 7 天后过期。
 

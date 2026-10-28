@@ -3,6 +3,48 @@ import SwiftUI
 /// App 里能改的设置：在空白处双击打开。存在 UserDefaults 里，关掉再开还在。
 /// 没列在这儿的（站的高度、走动范围、凳子位置）还是改 FaceConfig.swift 里的常量。
 enum Prefs {
+    /// App 和表盘复杂功能都读这一份，所以放在 App Group 里（免费账号也能用）
+    static let store: UserDefaults = {
+        guard let shared = UserDefaults(suiteName: "group.com.shawn.liveface") else { return .standard }
+        // 以前存在 App 自己的沙盒里，第一次运行搬过来
+        if shared.object(forKey: Key.migrated) == nil {
+            for key in Key.all where UserDefaults.standard.object(forKey: key) != nil {
+                shared.set(UserDefaults.standard.object(forKey: key), forKey: key)
+            }
+            shared.set(true, forKey: Key.migrated)
+        }
+        return shared
+    }()
+
+    /// 表盘上那个「世界时钟」显示哪座城市
+    /// name 给设置页看，english 显示在表盘上（表盘上的字一律用英文）
+    struct City: Hashable {
+        let name: String
+        let english: String
+        let timeZone: String
+    }
+
+    static let cities = [
+        City(name: "北京", english: "Beijing", timeZone: "Asia/Shanghai"),
+        City(name: "香港", english: "Hong Kong", timeZone: "Asia/Hong_Kong"),
+        City(name: "东京", english: "Tokyo", timeZone: "Asia/Tokyo"),
+        City(name: "首尔", english: "Seoul", timeZone: "Asia/Seoul"),
+        City(name: "新加坡", english: "Singapore", timeZone: "Asia/Singapore"),
+        City(name: "迪拜", english: "Dubai", timeZone: "Asia/Dubai"),
+        City(name: "伦敦", english: "London", timeZone: "Europe/London"),
+        City(name: "巴黎", english: "Paris", timeZone: "Europe/Paris"),
+        City(name: "纽约", english: "New York", timeZone: "America/New_York"),
+        City(name: "芝加哥", english: "Chicago", timeZone: "America/Chicago"),
+        City(name: "洛杉矶", english: "Los Angeles", timeZone: "America/Los_Angeles"),
+        City(name: "温哥华", english: "Vancouver", timeZone: "America/Vancouver"),
+        City(name: "悉尼", english: "Sydney", timeZone: "Australia/Sydney"),
+    ]
+
+    static var city: City {
+        let id = store.string(forKey: Key.cityTimeZone) ?? cities[0].timeZone
+        return cities.first { $0.timeZone == id } ?? cities[0]
+    }
+
     /// 歪手腕、甩手腕的灵敏度：阈值乘这个数，越小越容易触发
     enum Sensitivity: Int, CaseIterable {
         case light = 0, normal = 1, heavy = 2
@@ -31,6 +73,13 @@ enum Prefs {
         static let sleepFrom = "sleepFrom"
         static let sleepTo = "sleepTo"
         static let sensitivity = "sensitivity"
+        static let cityTimeZone = "cityTimeZone"
+        static let petIndex = "petIndex"
+        static let backgroundIndex = "backgroundIndex"
+        static let migrated = "migratedToAppGroup"
+
+        static let all = [clockStyle, use24Hour, alwaysOnPercent, sleepFrom, sleepTo,
+                          sensitivity, cityTimeZone, petIndex, backgroundIndex]
     }
 
     static var clockStyle: ClockStyle { ClockStyle(rawValue: int(Key.clockStyle, 3)) ?? .top }
@@ -45,11 +94,11 @@ enum Prefs {
 
     /// UserDefaults 里没写过的时候返回出厂值（没写过和写了 0 要分开）
     private static func int(_ key: String, _ fallback: Int) -> Int {
-        UserDefaults.standard.object(forKey: key) as? Int ?? fallback
+        store.object(forKey: key) as? Int ?? fallback
     }
 
     private static func bool(_ key: String, _ fallback: Bool) -> Bool {
-        UserDefaults.standard.object(forKey: key) as? Bool ?? fallback
+        store.object(forKey: key) as? Bool ?? fallback
     }
 
 }
@@ -57,12 +106,13 @@ enum Prefs {
 /// 设置页：转表冠上下翻，点右上角「完成」关掉
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(Prefs.Key.clockStyle) private var clockStyle = 3
-    @AppStorage(Prefs.Key.use24Hour) private var use24Hour = true
-    @AppStorage(Prefs.Key.alwaysOnPercent) private var alwaysOnPercent = 35
-    @AppStorage(Prefs.Key.sleepFrom) private var sleepFrom = 23
-    @AppStorage(Prefs.Key.sleepTo) private var sleepTo = 7
-    @AppStorage(Prefs.Key.sensitivity) private var sensitivity = Prefs.Sensitivity.normal.rawValue
+    @AppStorage(Prefs.Key.clockStyle, store: Prefs.store) private var clockStyle = 3
+    @AppStorage(Prefs.Key.use24Hour, store: Prefs.store) private var use24Hour = true
+    @AppStorage(Prefs.Key.alwaysOnPercent, store: Prefs.store) private var alwaysOnPercent = 35
+    @AppStorage(Prefs.Key.sleepFrom, store: Prefs.store) private var sleepFrom = 23
+    @AppStorage(Prefs.Key.sleepTo, store: Prefs.store) private var sleepTo = 7
+    @AppStorage(Prefs.Key.sensitivity, store: Prefs.store) private var sensitivity = Prefs.Sensitivity.normal.rawValue
+    @AppStorage(Prefs.Key.cityTimeZone, store: Prefs.store) private var cityTimeZone = Prefs.cities[0].timeZone
 
     // 「仿 P3R 菜单」是给视频模式做的版式，桌宠模式用不上，不列在这儿。
     // ClockStyle.menu 还在，想用就改 Prefs.clockStyle 的出厂值
@@ -90,6 +140,18 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.navigationLink)
+                }
+                Section {
+                    Picker("城市", selection: $cityTimeZone) {
+                        ForEach(Prefs.cities, id: \.timeZone) { city in
+                            Text("\(city.name) \(city.english)").tag(city.timeZone)
+                        }
+                    }
+                    .pickerStyle(.navigationLink)
+                } header: {
+                    Text("表盘上的世界时钟")
+                } footer: {
+                    Text("系统表盘的复杂功能里，干员头像旁边显示这座城市的时间。")
                 }
                 Section("睡觉") {
                     Picker("从", selection: $sleepFrom) { hours }
